@@ -109,11 +109,13 @@ void data_display(void)
 	PB = 1000000.0 / FB;
 	if(data_flag == 0)
 	{
-
 		//显示频率并转换单位
 		if(FA > 1000)
 		{
 			sprintf(dis_str, "     A=%.2fKHz        ", FA / 1000); 
+		}else if(FA < 0)
+		{
+			sprintf(dis_str, "     A=NULL         ");
 		}else
 		{
 			sprintf(dis_str, "     A=%dHz        ", (int)FA);
@@ -122,6 +124,9 @@ void data_display(void)
 		if(FB > 1000)
 		{
 			sprintf(dis_str, "     B=%.2fKHz        ", FB / 1000); 
+		}else if(FB < 0)
+		{
+			sprintf(dis_str, "     B=NULL         ");
 		}else
 		{
 			sprintf(dis_str, "     B=%dHz        ", (int)FB);
@@ -133,6 +138,9 @@ void data_display(void)
 		if(PA > 1000)
 		{
 			sprintf(dis_str, "     A=%.2fmS        ", PA / 1000); 
+		}else if(PA < 0)
+		{
+			sprintf(dis_str, "     A=NULL         ");
 		}else
 		{
 			sprintf(dis_str, "     A=%duS        ", (int)PA);
@@ -141,6 +149,9 @@ void data_display(void)
 		if(PB > 1000)
 		{
 			sprintf(dis_str, "     B=%.2fmS        ", PB / 1000); 
+		}else if(PB < 0)
+		{
+			sprintf(dis_str, "     B=NULL         ");
 		}else
 		{
 			sprintf(dis_str, "     B=%duS        ", (int)PB);
