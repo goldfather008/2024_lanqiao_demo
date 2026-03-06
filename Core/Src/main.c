@@ -66,12 +66,19 @@ uint8_t led = 0xff; //led的初始状态，1表示熄灭，0是点亮
 
 char dis_str[21];
 
-uint8_t sys_state=0;	//显示界面
+uint8_t sys_state = 0;	//显示界面
+uint8_t data_flag = 0;	// 在数据界面下，按下 B3 按键，切换频率或周期显示模式
 
 
+/* 全局变量：仅存储频率相关参数 */
+
+uint32_t A_Period = 0;      // PWM周期（单位：μs，计数频率1MHz）
+float A_Freq = 0.0f;        // PWM频率（单位：Hz）
+
+uint32_t B_Period = 0;      // PWM周期（单位：μs，计数频率1MHz）
+float B_Freq = 0.0f;        // PWM频率（单位：Hz）
 
 
-//btns[0].GPIO_Pin = GPIO_PIN_0;
 
 /* USER CODE END PV */
 
@@ -87,16 +94,53 @@ void SystemClock_Config(void);
 void data_display(void)
 {
 	LCD_DisplayStringLine(Line1, (uint8_t *)"        DATA        ");
-	LCD_DisplayStringLine(Line4, (uint8_t *)"     A=488uS        ");
-	LCD_DisplayStringLine(Line5, (uint8_t *)"     B=1.26mS       ");
+	
+	if(data_flag == 0)
+	{
+		//显示频率并转换单位
+		if(A_Freq > 1000)
+		{
+			sprintf(dis_str, "     A=%.2fKHz        ", A_Freq / 1000); 
+		}else
+		{
+			sprintf(dis_str, "     A=%dHz        ", (int)A_Freq);
+		}
+		LCD_DisplayStringLine(Line4, (uint8_t *)dis_str);
+		if(B_Freq > 1000)
+		{
+			sprintf(dis_str, "     B=%.2fKHz        ", B_Freq / 1000); 
+		}else
+		{
+			sprintf(dis_str, "     B=%dHz        ", (int)B_Freq);
+		}
+		LCD_DisplayStringLine(Line5, (uint8_t *)dis_str);
+	}else
+	{
+		//显示周期并转换单位
+		if(A_Period > 1000)
+		{
+			sprintf(dis_str, "     A=%.2fmS        ", (float)A_Period / 1000); 
+		}else
+		{
+			sprintf(dis_str, "     A=%duS        ", A_Period);
+		}
+		LCD_DisplayStringLine(Line4, (uint8_t *)dis_str);
+		if(B_Period > 1000)
+		{
+			sprintf(dis_str, "     B=%.2fmS        ", (float)B_Period / 1000); 
+		}else
+		{
+			sprintf(dis_str, "     B=%duS        ", B_Period);
+		}
+		LCD_DisplayStringLine(Line5, (uint8_t *)dis_str);
+	}
+	
 }
 //参数显示界面
 void para_display(void)
 {
 	LCD_DisplayStringLine(Line1, (uint8_t *)"        PARA        ");
-//	sprintf(dis_str, "     R=%d            ", R);
 	LCD_DisplayStringLine(Line4, (uint8_t *)"     PD=1000Hz      ");
-//	sprintf(dis_str, "     K=%d            ", K);
 	LCD_DisplayStringLine(Line5, (uint8_t *)"     PH=1000Hz      ");
 	LCD_DisplayStringLine(Line6, (uint8_t *)"     PX=200Hz      ");
 }
@@ -152,7 +196,11 @@ void single_click_handler(uint8_t id)
 			break;
 		case 2:
 			printf("B3单击...\r\n");
-
+			if(sys_state == 0)
+			{
+				//在数据显示界面下，切换频率或周期显示模式
+				data_flag == 0 ? (data_flag = 1) : (data_flag = 0);
+			}
 			break;
 		case 3:
 			printf("界面切换...\r\n");
@@ -258,6 +306,7 @@ int main(void)
 
 	
    uint32_t tick1=uwTick;
+   uint32_t tick2=uwTick;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -282,7 +331,6 @@ int main(void)
   MX_DMA_Init();
   MX_ADC2_Init();
   MX_TIM3_Init();
-  MX_TIM16_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
   printf("串口测试...\r\n");
@@ -315,6 +363,11 @@ int main(void)
 	LCD_SetBackColor(Black);
 	LCD_SetTextColor(White);
 	
+  // 启用定时器捕获模式
+  HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_1);
+  HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_2);
+  HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_1);
+  HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_2);
 
   /* USER CODE END 2 */
 
@@ -322,12 +375,17 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	if(uwTick >= tick1 + 10)  //间隔10ms执行键盘扫描、LCD、LED显示任务
+	if(uwTick >= tick1 + 10)  //间隔10ms执行键盘扫描
 	{
 		
 		for(uint8_t i=0; i<4; i++){
 			button_handler(&btns[i]);
 		}
+		tick1 = uwTick;   //更新节拍
+	}
+		
+	if(uwTick >= tick2 + 100)  //间隔100ms 界面数据刷新一次
+	{
 		
 		switch(sys_state){
 		case 0:
@@ -339,12 +397,8 @@ int main(void)
 		case 2:
 			recd_display();
 			break;
-		
-		update_led();
-		
-		tick1 = uwTick;   //更新节拍
-	}
-		
+		}
+		tick2 = uwTick;   //更新节拍
 		
 	}  
 	
@@ -415,6 +469,22 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 
 }
 
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
+{
+  if (htim == &htim2)
+  {
+	  A_Period = __HAL_TIM_GET_COMPARE(&htim2, TIM_CHANNEL_1); //两个上升沿之间的计数值即周期，单位us
+	  A_Freq = 1000000.0f / A_Period;//单位Hz
+  }
+  
+  if (htim == &htim3)
+  {
+	  B_Period = __HAL_TIM_GET_COMPARE(&htim3, TIM_CHANNEL_1);
+	  B_Freq = 1000000.0f / B_Period;//单位Hz
+  }
+  
+
+}
 
 /* USER CODE END 4 */
 

@@ -39,10 +39,11 @@ void MX_ADC2_Init(void)
   /* USER CODE BEGIN ADC2_Init 1 */
 
   /* USER CODE END ADC2_Init 1 */
+
   /** Common config
   */
   hadc2.Instance = ADC2;
-  hadc2.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
+  hadc2.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2;
   hadc2.Init.Resolution = ADC_RESOLUTION_12B;
   hadc2.Init.DataAlign = ADC_DATAALIGN_RIGHT;
   hadc2.Init.GainCompensation = 0;
@@ -61,6 +62,7 @@ void MX_ADC2_Init(void)
   {
     Error_Handler();
   }
+
   /** Configure Regular Channel
   */
   sConfig.Channel = ADC_CHANNEL_15;
@@ -89,6 +91,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
   /* USER CODE BEGIN ADC2_MspInit 0 */
 
   /* USER CODE END ADC2_MspInit 0 */
+
   /** Initializes the peripherals clocks
   */
     PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_ADC12;
