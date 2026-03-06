@@ -76,7 +76,7 @@ I (../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_tim.h)(0x69A96ECF)
 I (../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_tim_ex.h)(0x69A96ECF)
 I (../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_uart.h)(0x69A96ECF)
 I (../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_uart_ex.h)(0x69A96ECF)
-F (../Core/Src/main.c)(0x69AABF4C)(--c99 -c --cpu Cortex-M4.fp.sp -D__MICROLIB -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32G4xx_HAL_Driver/Inc -I ../Drivers/STM32G4xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32G4xx/Include -I ../Drivers/CMSIS/Include-I.\RTE\_demo-IC:\Users\Administrator\AppData\Local\Arm\Packs\ARM\CMSIS\6.2.0\CMSIS\Core\Include-IC:\Users\Administrator\AppData\Local\Arm\Packs\Keil\STM32G4xx_DFP\1.5.0\Drivers\CMSIS\Device\ST\STM32G4xx\Include-D__UVISION_VERSION="543" -DSTM32G431xx -D_RTE_ -DUSE_HAL_DRIVER -DSTM32G431xx-o demo\main.o --omf_browse demo\main.crf --depend demo\main.d)
+F (../Core/Src/main.c)(0x69AAD01F)(--c99 -c --cpu Cortex-M4.fp.sp -D__MICROLIB -g -O3 --apcs=interwork --split_sections -I ../Core/Inc -I ../Drivers/STM32G4xx_HAL_Driver/Inc -I ../Drivers/STM32G4xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32G4xx/Include -I ../Drivers/CMSIS/Include-I.\RTE\_demo-IC:\Users\Administrator\AppData\Local\Arm\Packs\ARM\CMSIS\6.2.0\CMSIS\Core\Include-IC:\Users\Administrator\AppData\Local\Arm\Packs\Keil\STM32G4xx_DFP\1.5.0\Drivers\CMSIS\Device\ST\STM32G4xx\Include-D__UVISION_VERSION="543" -DSTM32G431xx -D_RTE_ -DUSE_HAL_DRIVER -DSTM32G431xx-o demo\main.o --omf_browse demo\main.crf --depend demo\main.d)
 I (../Core/Inc/main.h)(0x69A972E1)
 I (../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal.h)(0x69A96ECF)
 I (../Core/Inc/stm32g4xx_hal_conf.h)(0x65E7EE05)

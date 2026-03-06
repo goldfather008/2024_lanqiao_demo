@@ -3,7 +3,7 @@
 <title>Static Call Graph - [demo\demo.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image demo\demo.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060960: Last Updated: Fri Mar 06 19:49:35 2026
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060960: Last Updated: Fri Mar 06 21:01:22 2026
 <BR><P>
 <H3>Maximum Stack Usage =        232 bytes + Unknown(Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -1378,8 +1378,7 @@ Global Symbols
 <P><STRONG><a name="[ac]"></a>__2printf</STRONG> (Thumb, 0 bytes, Stack size 24 bytes, printfa.o(i.__0printf))
 <BR><BR>[Stack]<UL><LI>Max Depth = 24<LI>Call Chain = __2printf
 </UL>
-<BR>[Called By]<UL><LI><a href="#[ec]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;single_click_handler
-<LI><a href="#[50]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
+<BR>[Called By]<UL><LI><a href="#[50]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 <LI><a href="#[eb]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;long_press_handler
 <LI><a href="#[ab]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_UARTEx_RxEventCallback
 </UL>
@@ -1398,7 +1397,8 @@ Global Symbols
 <P><STRONG><a name="[ef]"></a>__2sprintf</STRONG> (Thumb, 0 bytes, Stack size 24 bytes, printfa.o(i.__0sprintf))
 <BR><BR>[Stack]<UL><LI>Max Depth = 24<LI>Call Chain = __2sprintf
 </UL>
-<BR>[Called By]<UL><LI><a href="#[ed]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;data_display
+<BR>[Called By]<UL><LI><a href="#[f3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;para_display
+<LI><a href="#[ed]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;data_display
 </UL>
 
 <P><STRONG><a name="[109]"></a>__c89sprintf</STRONG> (Thumb, 0 bytes, Stack size 24 bytes, printfa.o(i.__0sprintf), UNUSED)
@@ -1421,7 +1421,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[50]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[ed]"></a>data_display</STRONG> (Thumb, 272 bytes, Stack size 24 bytes, main.o(i.data_display))
+<P><STRONG><a name="[ed]"></a>data_display</STRONG> (Thumb, 328 bytes, Stack size 24 bytes, main.o(i.data_display))
 <BR><BR>[Stack]<UL><LI>Max Depth = 92<LI>Call Chain = data_display &rArr; LCD_DisplayStringLine &rArr; LCD_DisplayChar &rArr; LCD_DrawChar &rArr; LCD_SetCursor &rArr; LCD_WriteReg
 </UL>
 <BR>[Calls]<UL><LI><a href="#[ee]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_f2d
@@ -1472,10 +1472,11 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> entry9a.o(.ARM.Collect$$$$0000000B)
 </UL>
-<P><STRONG><a name="[f3]"></a>para_display</STRONG> (Thumb, 38 bytes, Stack size 8 bytes, main.o(i.para_display))
+<P><STRONG><a name="[f3]"></a>para_display</STRONG> (Thumb, 70 bytes, Stack size 8 bytes, main.o(i.para_display))
 <BR><BR>[Stack]<UL><LI>Max Depth = 76<LI>Call Chain = para_display &rArr; LCD_DisplayStringLine &rArr; LCD_DisplayChar &rArr; LCD_DrawChar &rArr; LCD_SetCursor &rArr; LCD_WriteReg
 </UL>
 <BR>[Calls]<UL><LI><a href="#[c9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LCD_DisplayStringLine
+<LI><a href="#[ef]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__2sprintf
 </UL>
 <BR>[Called By]<UL><LI><a href="#[50]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
@@ -1488,11 +1489,10 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[50]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[ec]"></a>single_click_handler</STRONG> (Thumb, 88 bytes, Stack size 16 bytes, main.o(i.single_click_handler))
+<P><STRONG><a name="[ec]"></a>single_click_handler</STRONG> (Thumb, 194 bytes, Stack size 16 bytes, main.o(i.single_click_handler))
 <BR><BR>[Stack]<UL><LI>Max Depth = 48<LI>Call Chain = single_click_handler &rArr; LCD_Clear &rArr; LCD_SetCursor &rArr; LCD_WriteReg
 </UL>
 <BR>[Calls]<UL><LI><a href="#[c2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LCD_Clear
-<LI><a href="#[ac]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__2printf
 </UL>
 <BR>[Called By]<UL><LI><a href="#[e9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;button_handler
 </UL>

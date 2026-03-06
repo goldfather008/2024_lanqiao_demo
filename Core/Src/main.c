@@ -67,11 +67,10 @@ uint8_t led = 0xff; //led的初始状态，1表示熄灭，0是点亮
 char dis_str[21];
 
 uint8_t sys_state = 0;	//显示界面
+
+
+/* 全局变量 */
 uint8_t data_flag = 0;	// 在数据界面下，按下 B3 按键，切换频率或周期显示模式
-
-
-/* 全局变量：仅存储频率相关参数 */
-
 uint32_t A_Period = 0;      // PWM周期（单位：μs，计数频率1MHz）
 float A_Freq = 0.0f;        // PWM频率（单位：Hz）
 
@@ -79,6 +78,14 @@ uint32_t B_Period = 0;      // PWM周期（单位：μs，计数频率1MHz）
 float B_Freq = 0.0f;        // PWM频率（单位：Hz）
 
 
+int32_t PX = 0;	// 校准参数，默认参数0
+int32_t PH = 5000; // 超限参数，默认5000
+int32_t PD = 1000; // 突变参数，默认1000
+
+uint8_t para_flag = 0; // 在参数界面下，按下 B3 按键，切换当前选择的参数
+
+float FA, FB; // 保存校验后的频率
+float PA, PB; // 保存校验后的周期
 
 /* USER CODE END PV */
 
@@ -94,43 +101,49 @@ void SystemClock_Config(void);
 void data_display(void)
 {
 	LCD_DisplayStringLine(Line1, (uint8_t *)"        DATA        ");
-	
+	//频率校验，单位Hz
+	FA = A_Freq + PX; 
+	FB = B_Freq + PX;
+	//周期转换，单位uS
+	PA = 1000000.0 / FA;
+	PB = 1000000.0 / FB;
 	if(data_flag == 0)
 	{
+
 		//显示频率并转换单位
-		if(A_Freq > 1000)
+		if(FA > 1000)
 		{
-			sprintf(dis_str, "     A=%.2fKHz        ", A_Freq / 1000); 
+			sprintf(dis_str, "     A=%.2fKHz        ", FA / 1000); 
 		}else
 		{
-			sprintf(dis_str, "     A=%dHz        ", (int)A_Freq);
+			sprintf(dis_str, "     A=%dHz        ", (int)FA);
 		}
 		LCD_DisplayStringLine(Line4, (uint8_t *)dis_str);
-		if(B_Freq > 1000)
+		if(FB > 1000)
 		{
-			sprintf(dis_str, "     B=%.2fKHz        ", B_Freq / 1000); 
+			sprintf(dis_str, "     B=%.2fKHz        ", FB / 1000); 
 		}else
 		{
-			sprintf(dis_str, "     B=%dHz        ", (int)B_Freq);
+			sprintf(dis_str, "     B=%dHz        ", (int)FB);
 		}
 		LCD_DisplayStringLine(Line5, (uint8_t *)dis_str);
 	}else
 	{
 		//显示周期并转换单位
-		if(A_Period > 1000)
+		if(PA > 1000)
 		{
-			sprintf(dis_str, "     A=%.2fmS        ", (float)A_Period / 1000); 
+			sprintf(dis_str, "     A=%.2fmS        ", PA / 1000); 
 		}else
 		{
-			sprintf(dis_str, "     A=%duS        ", A_Period);
+			sprintf(dis_str, "     A=%duS        ", (int)PA);
 		}
 		LCD_DisplayStringLine(Line4, (uint8_t *)dis_str);
-		if(B_Period > 1000)
+		if(PB > 1000)
 		{
-			sprintf(dis_str, "     B=%.2fmS        ", (float)B_Period / 1000); 
+			sprintf(dis_str, "     B=%.2fmS        ", PB / 1000); 
 		}else
 		{
-			sprintf(dis_str, "     B=%duS        ", B_Period);
+			sprintf(dis_str, "     B=%duS        ", (int)PB);
 		}
 		LCD_DisplayStringLine(Line5, (uint8_t *)dis_str);
 	}
@@ -140,9 +153,12 @@ void data_display(void)
 void para_display(void)
 {
 	LCD_DisplayStringLine(Line1, (uint8_t *)"        PARA        ");
-	LCD_DisplayStringLine(Line4, (uint8_t *)"     PD=1000Hz      ");
-	LCD_DisplayStringLine(Line5, (uint8_t *)"     PH=1000Hz      ");
-	LCD_DisplayStringLine(Line6, (uint8_t *)"     PX=200Hz      ");
+	sprintf(dis_str, "     PD=%dHz      ", PD);
+	LCD_DisplayStringLine(Line4, (uint8_t *)dis_str);
+	sprintf(dis_str, "     PH=%dHz      ", PH);
+	LCD_DisplayStringLine(Line5, (uint8_t *)dis_str);
+	sprintf(dis_str, "     PX=%dHz      ", PX);
+	LCD_DisplayStringLine(Line6, (uint8_t *)dis_str);
 }
 //统计界面
 void recd_display(void)
@@ -187,23 +203,41 @@ void single_click_handler(uint8_t id)
 
 	switch(id){
 		case 0:
-			printf("B1单击...\r\n");
-
+//			printf("B1单击...\r\n");
+			if(para_flag == 0) PD += 100;
+			if(para_flag == 1) PH += 100;
+			if(para_flag == 2) PX += 100;
+			// 边界值
+			if(PD > 1000) PD = 1000; 
+			if(PH > 10000) PH = 10000; 
+			if(PX > 1000) PX = 1000; 
 			break;
 		case 1:
-			printf("B2单击...\r\n");
-
+//			printf("B2单击...\r\n");
+			if(para_flag == 0) PD -= 100;
+			if(para_flag == 1) PH -= 100;
+			if(para_flag == 2) PX -= 100;
+			// 边界值
+			if(PD < 100) PD = 100; 
+			if(PH < 1000) PH = 1000; 
+			if(PX < -1000) PX = -1000; 
 			break;
 		case 2:
-			printf("B3单击...\r\n");
+//			printf("B3单击...\r\n");
 			if(sys_state == 0)
 			{
 				//在数据显示界面下，切换频率或周期显示模式
 				data_flag == 0 ? (data_flag = 1) : (data_flag = 0);
 			}
+			
+			if(sys_state == 1)
+			{
+				// 在参数显示界面下，切换参数
+				para_flag == 2 ? (para_flag = 0) : (para_flag++);
+			}
 			break;
 		case 3:
-			printf("界面切换...\r\n");
+//			printf("界面切换...\r\n");
 			LCD_Clear(Black); // 先清屏
 		    sys_state == 2 ? (sys_state = 0) : (sys_state++);
 
