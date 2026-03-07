@@ -87,6 +87,13 @@ uint8_t para_flag = 0; // 在参数界面下，按下 B3 按键，切换当前选择的参数
 float FA, FB; // 保存校验后的频率
 float PA, PB; // 保存校验后的周期
 
+uint32_t NDA, NDB; // 记录频率突变次数
+uint32_t NHA, NHB; // 记录频率超限次数
+
+float FA_Array[30], FB_Array[30]; // 记录3s的频率数据
+uint8_t Counter; // 数据计数器
+uint8_t Recd_Flag; // 检测突变测试开关
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -101,12 +108,6 @@ void SystemClock_Config(void);
 void data_display(void)
 {
 	LCD_DisplayStringLine(Line1, (uint8_t *)"        DATA        ");
-	//频率校验，单位Hz
-	FA = A_Freq + PX; 
-	FB = B_Freq + PX;
-	//周期转换，单位uS
-	PA = 1000000.0 / FA;
-	PB = 1000000.0 / FB;
 	if(data_flag == 0)
 	{
 		//显示频率并转换单位
@@ -175,10 +176,14 @@ void para_display(void)
 void recd_display(void)
 {
 	LCD_DisplayStringLine(Line1, (uint8_t *)"        RECD        ");
-	LCD_DisplayStringLine(Line4, (uint8_t *)"     NDA=3          ");
-	LCD_DisplayStringLine(Line5, (uint8_t *)"     NDB=1          ");
-	LCD_DisplayStringLine(Line6, (uint8_t *)"     NHA=0          ");
-	LCD_DisplayStringLine(Line7, (uint8_t *)"     NHB=2          ");
+	sprintf(dis_str, "     NDA=%d         ", NDA);
+	LCD_DisplayStringLine(Line4, (uint8_t *)dis_str);
+	sprintf(dis_str, "     NDB=%d         ", NDB);
+	LCD_DisplayStringLine(Line5, (uint8_t *)dis_str);
+	sprintf(dis_str, "     NHA=%d         ", NHA);
+	LCD_DisplayStringLine(Line6, (uint8_t *)dis_str);
+	sprintf(dis_str, "     NHB=%d         ", NHB);
+	LCD_DisplayStringLine(Line7, (uint8_t *)dis_str);
 }
 
 //更新LED函数
@@ -420,24 +425,104 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	if(uwTick >= tick1 + 10)  //间隔10ms执行键盘扫描
+	if(uwTick >= tick1 + 10)  //间隔10ms执行键盘扫描, 更新LED状态
 	{
-		
+		update_led();
 		for(uint8_t i=0; i<4; i++){
 			button_handler(&btns[i]);
 		}
 		tick1 = uwTick;   //更新节拍
+		
 	}
 		
-	if(uwTick >= tick2 + 100)  //间隔100ms 界面数据刷新一次
+	if(uwTick >= tick2 + 100)  //间隔100ms，更新频率同时界面数据刷新一次
 	{
+		//频率校验，单位Hz
+		FA = A_Freq + PX; 
+		FB = B_Freq + PX;
+		//周期转换，单位uS
+		PA = 1000000.0 / FA;
+		PB = 1000000.0 / FB;
+		// 判断是否超过限定值，并记录超限次数
+		static uint8_t Flag_FA = 0;
+		static uint8_t Flag_FB = 0;
+		if(Flag_FA == 0 && FA > PH)
+		{
+			//大于限定值记录下来，但是只能记录一次，后面就不要再记录了，直到数据又再次小于限定值
+			NHA++;
+			Flag_FA = 1;
+		}
+		if(Flag_FA == 1 && FA < PH) Flag_FA = 0;
 		
+		if(FA > PH)
+		{
+			led &= ~(1 << 1); // 点亮LD2
+		}else
+		{
+			led |= (1 << 1); // 熄灭LD2
+		}
+		
+		if(Flag_FB == 0 && FB > PH)
+		{
+			//大于限定值记录下来，但是只能记录一次，后面就不要再记录了，直到数据又再次小于限定值
+			NHB++;
+			Flag_FB = 1;
+		}
+		if(Flag_FB == 1 && FB < PH) Flag_FB = 0;
+		
+		if(FB > PH)
+		{
+			led &= ~(1 << 2); // 点亮LD3
+		}else
+		{
+			led |= (1 << 2); // 熄灭LD3
+		}
+		
+		// 记录AB通道的前3秒（即30个）数据
+		FA_Array[Counter] = FA;
+		FB_Array[Counter] = FB;
+		Counter++;
+		if(Counter == 30)
+		{
+			Counter = 0;
+			Recd_Flag = 1; // 检测突变测试开关打开
+		}
+		//找出AB通道频率的最小值和最大值
+		float FA_Min = FA;
+		float FA_Max = FA;
+		float FB_Min = FB; 
+		float FB_Max = FB; 
+		//找数组里的最小值和最大值
+		for(uint8_t i = 0; i < 30; i++){
+			if(FA_Array[i] < FA_Min) FA_Min = FA_Array[i];
+			if(FA_Array[i] > FA_Max) FA_Max = FA_Array[i];
+			if(FB_Array[i] < FB_Min) FB_Min = FB_Array[i];
+			if(FB_Array[i] > FB_Max) FB_Max = FB_Array[i];
+		}
+		//过3秒钟后才开始记录突变次数
+		if(Recd_Flag == 1)
+		{
+			if((FA_Max - FA_Min) > PD) NDA++;
+			if((FB_Max - FB_Min) > PD) NDB++;
+		}
+		
+		if(NDA >= 3 || NDB >=3)
+		{
+			led &= ~(1 << 8); // 点亮LD8
+		}else
+		{
+			led |= (1 << 8); // 熄灭LD8
+		}
+		
+		// 显示界面切换
 		switch(sys_state){
 		case 0:
 			data_display();
+			led &= ~(1 << 0); // 点亮LD1
 			break;
 		case 1:
 			para_display();
+			led |= (1 << 0); // 熄灭LD1
 			break;
 		case 2:
 			recd_display();
