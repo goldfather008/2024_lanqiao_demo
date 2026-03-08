@@ -62,7 +62,7 @@ uint8_t rx_buffer[30];//串口接收缓冲
 
 button btns[4];
 
-uint8_t led = 0xff; //led的初始状态，1表示熄灭，0是点亮
+uint8_t led = 0x00; //led的初始状态，0表示熄灭，1是点亮
 
 char dis_str[21];
 
@@ -121,7 +121,7 @@ void data_display(void)
 		{
 			sprintf(dis_str, "     A=%dHz        ", (int)FA);
 		}
-		LCD_DisplayStringLine(Line4, (uint8_t *)dis_str);
+		LCD_DisplayStringLine(Line3, (uint8_t *)dis_str);
 		if(FB > 1000)
 		{
 			sprintf(dis_str, "     B=%.2fKHz        ", FB / 1000); 
@@ -132,7 +132,7 @@ void data_display(void)
 		{
 			sprintf(dis_str, "     B=%dHz        ", (int)FB);
 		}
-		LCD_DisplayStringLine(Line5, (uint8_t *)dis_str);
+		LCD_DisplayStringLine(Line4, (uint8_t *)dis_str);
 	}else
 	{
 		//显示周期并转换单位
@@ -146,7 +146,7 @@ void data_display(void)
 		{
 			sprintf(dis_str, "     A=%duS        ", (int)PA);
 		}
-		LCD_DisplayStringLine(Line4, (uint8_t *)dis_str);
+		LCD_DisplayStringLine(Line3, (uint8_t *)dis_str);
 		if(PB > 1000)
 		{
 			sprintf(dis_str, "     B=%.2fmS        ", PB / 1000); 
@@ -157,7 +157,7 @@ void data_display(void)
 		{
 			sprintf(dis_str, "     B=%duS        ", (int)PB);
 		}
-		LCD_DisplayStringLine(Line5, (uint8_t *)dis_str);
+		LCD_DisplayStringLine(Line4, (uint8_t *)dis_str);
 	}
 	
 }
@@ -166,31 +166,31 @@ void para_display(void)
 {
 	LCD_DisplayStringLine(Line1, (uint8_t *)"        PARA        ");
 	sprintf(dis_str, "     PD=%dHz      ", PD);
-	LCD_DisplayStringLine(Line4, (uint8_t *)dis_str);
+	LCD_DisplayStringLine(Line3, (uint8_t *)dis_str);
 	sprintf(dis_str, "     PH=%dHz      ", PH);
-	LCD_DisplayStringLine(Line5, (uint8_t *)dis_str);
+	LCD_DisplayStringLine(Line4, (uint8_t *)dis_str);
 	sprintf(dis_str, "     PX=%dHz      ", PX);
-	LCD_DisplayStringLine(Line6, (uint8_t *)dis_str);
+	LCD_DisplayStringLine(Line5, (uint8_t *)dis_str);
 }
 //统计界面
 void recd_display(void)
 {
 	LCD_DisplayStringLine(Line1, (uint8_t *)"        RECD        ");
 	sprintf(dis_str, "     NDA=%d         ", NDA);
-	LCD_DisplayStringLine(Line4, (uint8_t *)dis_str);
+	LCD_DisplayStringLine(Line3, (uint8_t *)dis_str);
 	sprintf(dis_str, "     NDB=%d         ", NDB);
-	LCD_DisplayStringLine(Line5, (uint8_t *)dis_str);
+	LCD_DisplayStringLine(Line4, (uint8_t *)dis_str);
 	sprintf(dis_str, "     NHA=%d         ", NHA);
-	LCD_DisplayStringLine(Line6, (uint8_t *)dis_str);
+	LCD_DisplayStringLine(Line5, (uint8_t *)dis_str);
 	sprintf(dis_str, "     NHB=%d         ", NHB);
-	LCD_DisplayStringLine(Line7, (uint8_t *)dis_str);
+	LCD_DisplayStringLine(Line6, (uint8_t *)dis_str);
 }
 
 //更新LED函数
 void update_led(void)
 {
 	GPIOC->ODR &= 0x00ff;//保留低8位，对高8位清零
-	GPIOC->ODR |= led << 8; //设置高8位
+	GPIOC->ODR |= (~led) << 8; //设置高8位
 	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_2, 1);//更新输出
 	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_2, 0);
 }
@@ -206,6 +206,11 @@ void long_press_handler(uint8_t id)
 			break;
 		case 2:
 			printf("B3长按...\r\n");
+			// 长按1s记录值清零
+			NDA = 0;
+			NDB = 0;
+			NHA = 0;
+			NHB = 0;
 			break;
 		case 3:
 			printf("B4长按...\r\n");
@@ -253,10 +258,12 @@ void single_click_handler(uint8_t id)
 			}
 			break;
 		case 3:
-//			printf("界面切换...\r\n");
+//			printf("B4单击...\r\n");
+			// 界面切换
 			LCD_Clear(Black); // 先清屏
 		    sys_state == 2 ? (sys_state = 0) : (sys_state++);
-
+			if(sys_state == 0) data_flag = 0; // 切换回显示界面时，默认显示频率
+			if(sys_state == 1) para_flag = 0; // 切换回参数界面时，默认选择PD参数
 			break;
 			
 	}
@@ -295,7 +302,7 @@ void button_handler(button* btn)
 			if(btn->level != 0){		//按键松开
 				btn->ticks = 0; //重新计时
 				btn->state = 2; 
-			}else if(btn->ticks > 50){						//500ms没松开，发生长按事件
+			}else if(btn->ticks > 100){						//1000ms没松开，发生长按事件
 				//开始长按
 				//printf("长按...\r\n");
 				long_press_handler(btn->id);
@@ -456,10 +463,10 @@ int main(void)
 		
 		if(FA > PH)
 		{
-			led &= ~(1 << 1); // 点亮LD2
+			led |= 1 << 1; // 点亮LD2
 		}else
 		{
-			led |= (1 << 1); // 熄灭LD2
+			led &= ~(1 << 1); // 熄灭LD2
 		}
 		
 		if(Flag_FB == 0 && FB > PH)
@@ -472,13 +479,13 @@ int main(void)
 		
 		if(FB > PH)
 		{
-			led &= ~(1 << 2); // 点亮LD3
+			led |= (1 << 2);  // 点亮LD3
 		}else
 		{
-			led |= (1 << 2); // 熄灭LD3
+			led &= ~(1 << 2); // 熄灭LD3
 		}
 		
-		// 记录AB通道的前3秒（即30个）数据
+		// 记录AB通道的3秒（即30个）数据
 		FA_Array[Counter] = FA;
 		FB_Array[Counter] = FB;
 		Counter++;
@@ -487,42 +494,44 @@ int main(void)
 			Counter = 0;
 			Recd_Flag = 1; // 检测突变测试开关打开
 		}
-		//找出AB通道频率的最小值和最大值
-		float FA_Min = FA;
-		float FA_Max = FA;
-		float FB_Min = FB; 
-		float FB_Max = FB; 
-		//找数组里的最小值和最大值
-		for(uint8_t i = 0; i < 30; i++){
-			if(FA_Array[i] < FA_Min) FA_Min = FA_Array[i];
-			if(FA_Array[i] > FA_Max) FA_Max = FA_Array[i];
-			if(FB_Array[i] < FB_Min) FB_Min = FB_Array[i];
-			if(FB_Array[i] > FB_Max) FB_Max = FB_Array[i];
-		}
-		//过3秒钟后才开始记录突变次数
+
+		//每隔3秒钟检测一次突变次数
 		if(Recd_Flag == 1)
 		{
+			//找出AB通道频率的最小值和最大值
+			float FA_Min = FA;
+			float FA_Max = FA;
+			float FB_Min = FB; 
+			float FB_Max = FB; 
+			//找数组里的最小值和最大值
+			for(uint8_t i = 0; i < 30; i++){
+				if(FA_Array[i] < FA_Min) FA_Min = FA_Array[i];
+				if(FA_Array[i] > FA_Max) FA_Max = FA_Array[i];
+				if(FB_Array[i] < FB_Min) FB_Min = FB_Array[i];
+				if(FB_Array[i] > FB_Max) FB_Max = FB_Array[i];
+			}
 			if((FA_Max - FA_Min) > PD) NDA++;
 			if((FB_Max - FB_Min) > PD) NDB++;
+			Recd_Flag = 0; // 关闭检测开关，3秒后重新检测
 		}
 		
 		if(NDA >= 3 || NDB >=3)
 		{
-			led &= ~(1 << 8); // 点亮LD8
+			 led |= (1 << 7);// 点亮LD8
 		}else
 		{
-			led |= (1 << 8); // 熄灭LD8
+			led &= ~(1 << 7); // 熄灭LD8
 		}
 		
 		// 显示界面切换
 		switch(sys_state){
 		case 0:
 			data_display();
-			led &= ~(1 << 0); // 点亮LD1
+			led |= (1 << 0); // 点亮LD1
 			break;
 		case 1:
 			para_display();
-			led |= (1 << 0); // 熄灭LD1
+			led &= ~(1 << 0); // 熄灭LD1
 			break;
 		case 2:
 			recd_display();
@@ -551,7 +560,8 @@ void SystemClock_Config(void)
 
   /** Configure the main internal regulator output voltage
   */
-  HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1_BOOST);
+  HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1);
+
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
@@ -560,8 +570,8 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = RCC_PLLM_DIV4;
-  RCC_OscInitStruct.PLL.PLLN = 85;
+  RCC_OscInitStruct.PLL.PLLM = RCC_PLLM_DIV1;
+  RCC_OscInitStruct.PLL.PLLN = 10;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
   RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
@@ -569,6 +579,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -578,11 +589,12 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
   {
     Error_Handler();
   }
 }
+
 
 /* USER CODE BEGIN 4 */
 
